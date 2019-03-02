@@ -1,0 +1,2 @@
+# Multiverse OS Minimal Shell Framework Examples
+Included are examples of the core features of the shell framework which are intended to provide consistency across user experience and provide a base level of functionality for scripts. Beyond visual consistency, functional consistency is important beyond general quality reasons but specifically security reasons, when it comes to validation functions.
