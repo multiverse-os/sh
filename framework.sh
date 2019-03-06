@@ -1,5 +1,21 @@
 #!/bin/sh
 ###############################################################################
+debug=1
+###############################################################################
+## NOTE: Bourne shell doesn't support $(thing)! Update framework
+## Library Imports
+
+
+
+current_working_directory=$(pwd)
+if [ $debug -eq 1 ]; then
+	echo "current_working_directory is:" $current_working_directory
+fi
+
+ . ./sh-arguments.sh
+
+
+###############################################################################
 ## Multiverse OS Shell Framework
 ###############################################################################
 ## [Import Example]: Importing Shell Framework (using $SH_FRAMEWORK env)
@@ -38,25 +54,24 @@
 ## TODO: Provide function to provide these messages with X value. Then use those to generate these messages. 
 ## then stick all non-standard like beyond maybe 4 and 8 bit, the rest go into a special number/math module. 
 ##
-#
+##
 ## TODO: Most likely dont want to assign these until they are needed and so
 ##       use a function to etiher assign them or just move this logic into
 ##       a either OS module or a OS user module. 
-#
+##
 ## TODO: OS VALIDATION
 ## 	 Root
 ## 	 X user (is x user, is NOT x user) [TODO]
 ## 	 Is Valid Path (May not exist but valid characters, and format) [TODO]
 ## 	 Path Exists [TODO]
 ## 	 Is Process Running [TODO]
-#
-#
+##
 ## TODO: Add path_valid?; add check if_exists?; check has_permissions?
-
+##
 ## TODO: Is member of X group?
-
+##
 ## Does X directory exist? Does X file exist? (merge these to simplify)
-
+##
 ## Does X directory or file have X permissions or group?
 
 ## Create folder of file if does not exist (open_or_create
@@ -108,11 +123,85 @@
 # * Signature Validation (GPG, Scramble Key, ECDSA, SSH,...) [TODO]
 # * Is X VM Running [TODO]
 # * Is X VM Have Internet Connectivity (Router VMs, Controller VMs,...) [TODO]
+#
+#
+#=============================================================================
+# **Functionality Idea Brainstorming**
+# 
+#  * Simplify boolean checks through functions to parse a string or a int to
+#    see if it is a boolean; return either 0 or 1
+#  
+#  * provide a simple function to check length of a string
+#
+#  * provide function to check if a path exists; and one to check if a path
+#    is valid. one of the best ways to check validity is to touch a file 
+#    in that path see it it exists. then just delete it and report if it 
+#    was successful or not. 
+#
+#  * Function to list all available framework modules, then this list can 
 
+#  * Provide functions for creating simple wrapper scripts. For example:
+#    1) a wrapper that will ensure an executable is always running even
+#       after a crash. This is done by surrounding the  `./executable`
+#       with a while true; then ./executable; done loop.
+#    2) Or a wrapper that defines some env variables or uses some env
+#       variables or runs some other stuff before launching a problem
 
+#  * Add some Ruby language human-readable like aliases to function owr
+#    on reproduce functionality in Ruby like until, x times do, and so
+#    on (obviously where its possible) to make vanilla shell scripting
+#    much easier. This could be a module too so its optional and not
+#    bloating the core program
+
+#
+#  * (had an idea for another way to simplify things but cant remember)
+#
 ###############################################################################
-## Multiverse OS: Basic Terminal Coloring
+## TODO: Go through this document and migrate stuff to modules so that this
+##       is lean and minimial as reasonably possible. And the other logic
+##       is then optional and used when needed. 
+## 
+###############################################################################
+## Gloabl(s)
 ##=============================================================================
+# GLOBAL ALISES AND HELPERS
+#------------------------------------------------------------------------------
+
+
+
+
+
+
+
+##[_BOOLEAN_ALIASES_]
+#TRUE
+TRUE=1
+true=1
+YES=1
+yes=1
+##TODO: Need to also catch the string "Y", "YES", "Yes", and same for no)
+#FALSE
+FALSE=0
+false=0
+NO=0
+no=0
+
+parse_boolean(){# 1=ValueToCheck
+
+
+
+
+}
+
+is_true(){# 1=BooleanToCheck
+	ParseBoolean
+	if [ ]; then
+
+	fi
+}
+	 
+
+#==============================================================================
 # MULTIVERSE TERMINAL PALETTE
 #------------------------------------------------------------------------------
 ##COLOR_VARIABLE(s)

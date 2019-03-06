@@ -1,114 +1,72 @@
 #!/bin/sh
-###############################################################################
-## Multiverse OS: Basic Terminal Coloring
-##=============================================================================
-# MULTIVERSE TERMINAL PALETTE
-header="\e[0;95m"   # PURPLE
-accent="\e[37m"     # WHITE
-subheader="\e[98m"  # GRAY 
-strong="\e[96m"     # CYAN
-text="\e[94m"       # BLUE
-success="\e[92m"    # GREEN
-warning="\e[93m"    # YELLOW
-fail="\e[91m"       # RED
-reset="\e[0m"       # Terminal Default
+##==============================================================================
+## Install Default Configuration
+##------------------------------------------------------------------------------
+framework_repository="https://github.com/multiverse-os/sh"
+local_share_path="~/.local/share/"
+framework_path="sh/"
+framework_basename="framework.sh"
+framework_relative_path="$framework_path$framework_basename"
+framework_full_path="$local_share_path$framework_relative_path"
+sh_config_path="~/.bashrc"
+install_dependencies="git" # space separated *.deb dependencies
+##==[ Task List ]===============================================================
+## TODO: In the future, add loading of configuration via YAML or perhaps, 
+##       by command line flags, and if not specified, then prompt the user
+##       for input
+## TODO: Use method that just uses text file directly so an http request via
+##       and already installed program can be used.
 
-## Global Variables
-##============================================================================
-PACKAGE_DEPS="git" # Space separated if more than 1, then use cut to split
-CURRENT_USER=$(whoami)
-BASHRC="~/.bashrc"
-#OS
-HIDE_ERRORS="2>/dev/null"
-#UI
-##INSTALL STEPS
-STEP_COMPLETED="$accent'................................................................$reset$text  [$reset$success OK$reset$text ]$reset"
 
-##============================================================================
-## Global Function(s)
-##============================================================================
 print_banner(){
-	echo $header"Multiverse OS$reset$text:$reset$strong Shell Framework Installer"$reset
-	echo $accent"==============================================================================="$reset
-	echo $accent"Installer to provide consistent method of installation that will guide future"$reset
-	echo $accent"shell framework installation during alpha installation.\n"$reset
-}
-
-print_without_errors(){
-	echo "$1"$HIDE_ERRORS
-}
-
-print_step(){
-	echo $text"[$reset$header STEP $1$reset$text] $2:$reset$accent  .....................$reset$text  [$reset$accent$3$reset$text]"$reset
-}
-
-##-----------------------------------------------------------------------------
-is_root(){
-  if [ $CURRENT_USER -ne "root" ]; then
-    echo $fail"[Error]$reset$accent Must be logged in as root. Run 'su' and try again."$reset
-    exit 0
-  fi
-}
-##-----------------------------------------------------------------------------
-#DO ACTION
-do_action(){
-	$1
-	print_without_errors $1
-
-
+	echo "Multiverse OS: Framework Installation"
+	echo "================================================================================"
+	echo "[$framework_relative_path] Shell framework will check if already exists,..."
 }
 
 
-##-----------------------------------------------------------------------------
-#STEP FUNCTIONS
-do_step(){ # 1=StepNumber 2=StepDescription 3=StepValue 4=Action
-  step_print $1 $2 $3
-  do_action $4
-  # TODO: Advanced version would check if sucessful and print completed or fail
-  echo "$STEP_COMPLETED"
-
+##==[ Framework Installation ]==================================================
+main(){
+	## [Step 1]: Checking if 'git' exists; if NOT then installk ############
+	if uname -a | grep -Fqe "Debian"; then
+		package_manager="apt"
+	elif uname -a | grep -Fqe "Alpine"; then
+		package_manager="apk"
+	fi
+	echo "[$framework_relative_path] Confirming required installation dependencies are installed: $install_dependencies"
+	#if git | grep -Fqe "usage"; then
+		sudo apt-get -y install install $install_dependencies
+	#else
+	#	echo -e "[$framework_relative_path] Dependencies already installed, pulling repository into the local user share folder."
+	#fi
+	#
+	## [Step 2]: Checking if framework is installed, if NOT then clone #####
+	#
+	if [ -z "$framework_full_path" ]; then
+		echo "[$framework_relative_path] Bourne shell framework will check installation already exists."
+	else
+		echo "[$framework_relative_path] Bourne shell framework NOT installed, cloning repository into: $framework_full_path"
+		git clone $framework_repository $framework_full_path
+	fi
+	if printf '%s\n\' "$1" | grep -Fqe "export SH_FRAMEWORK"; then
+		echo "~/.bashrc part of the installation ALREADY exists!!"
+	else
+		echo -e ""                                                                                 >> ~/.bashrc
+		echo -e "## Multiverse OS: Bourne Shell Framework Import Syntax Patch"                     >> ~/.bashrc
+		echo -e "################################################################################" >> ~/.bashrc
+		echo -e "## SH_FRAMEWORK environmental variable is set to simplify import"                 >> ~/.bashrc
+		echo -e "## delclarations "                                                                >> ~/.bashrc
+		echo -e "#"                                                                                >> ~/.bashrc
+		echo -e ""                                                                                 >> ~/.bashrc
+		echo -e ""                                                                                 >> ~/.bashrc
+		echo -e "export SH_FRAMEWORK=\"\$SH_FRAMEWORK\""                                           >> ~/.bashrc
+		echo -e "import_script_with_data\(\){"                                                     >> ~/.bashrc
+		echo -e "SH_IMPORT_PARAMETER=\$2 . ./\$1"                                                  >> ~/.bashrc
+		echo -e "}"                                                                                >> ~/.bashrc
+		echo -e "alias sh_import=\"import_script_with_data\""                                      >> ~/.bashrc
+		echo -e ""                                                                                 >> ~/.bashrc
+	fi
 }
 
-
-##============================================================================
-## main() Function
-##============================================================================
-main() {
-	print_banner
-	# INSTALLATION STEPS
-	#=====================================================================
-	# STEP FUNCTION INFO
-	# do_step $StepNumber $StepDescription $StepValue $Action
-        #---------------------------------------------------------------------
-	# STEP 1: Install *.deb package dependencies
-	do_step 1 "Install \*.deb package dependencies" "$PACKAGE_DEPS" "sudo apt-get install $PACKAGE_DEPS"
-
-
-	# STEP 2: Git clone repository into '~/.local/share/'
-	do_step 2 "Clone repo:'github.com/multiverse-os/sh' to ~/.local/share/" "git" "cd ~/.local/share/ && git clone https://github.com/multiverse-os/sh"
-
-
-	# STEP 3: Install ENV variable in '~/.bashrc'
-	do_step 2 "Install \$SH_FRAMEWORK 'env' variable in '~/.bashrc'" "sh" "echo \"export SH_FRAMEWORK=\"~/.local/share/sh/framework.sh\"\" >> ~/.bashrc && "
-
-
-
-	echo "Adding ENV (environmental variable): SH_FRAMEWORK"
-
-
-
-
-	export SH_FRAMEWORK="/var/multiverse/sh/framework.sh"
-	load_framework(){
-		echo "attempting to run command: MODULES=$2 . ./$1"
-		MODULES=$2 . ./$1
-	}
-	alias import_shell="load_framework"
-
-
-
-}
-
-##==[ EXECUTION ]=============================================================##
+##[ Executing main function ]##################################################
 main
-

@@ -1,6 +1,6 @@
-# Multiverse OS Minimal Shell Framework
+# Multiverse OS: Minimal Bourne Shell Framework
 ===============================================================================
-The primary reason to use `sh` framework is used for Multiverse OS shell
+The primary reason to use bourne `sh` framework is used for Multiverse OS shell
 scripting, and recommended to the user, is because it centralized the
 security related responsbilities in shell scripts, implements thorough tests
 written for each security related (not completed yet) function.
@@ -88,7 +88,7 @@ environmental variable (aka ENV; from shell a list can be viewed by using
 the `env` command). 
 
 ```
-SH_FRAMEWORK="/home/user/multiverse/scripts/sh-framework"
+SH_FRAMEWORK="/home/user/.local/share/sh/framework"
 ```
 
 *For Multiverse OS users this environmental variable is set by default.*
@@ -102,8 +102,8 @@ scripts.
 
 ```
 # IF you are not using Multiverse:
-sudo su && cd ~/.local/share/ && git clone https://github.com/multiverse-os/sh-framework
-echo "export SH_FRAMEWORK="~/.local/share/sh-framework" >> ~/.bashrc && source ~/.bashrc
+sudo su && cd ~/.local/share/ && git clone https://github.com/multiverse-os/sh-framework sh
+echo "export SH_FRAMEWORK="~/.local/share/sh/framework.sh" >> ~/.bashrc && source ~/.bashrc
 ```
 
 
