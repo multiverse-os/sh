@@ -6,6 +6,19 @@
 # sh_import $SH_FRAMEWORK "all" #"vm libvirt"
 #
 ###############################################################################
+## Style NOTE: All variables are reassigned to a name that is human readable
+## from the argument being passed in, either to the progrom  as a whole, 
+## which in this program and at the beginning of each function. This provides
+## a way to get human readable names throughout the program, but also very
+## importantly, it gives us space for making assignment output, like:
+## `validate_{name_of_type}` or below is more complete example:
+# 
+## error_name=$(validate_error_name $1)
+##   Then error name is either assigned or the error is found and the problem
+##   and either prints it, and returns empty string or $false, or if fatal,
+##   simply exits the program.
+#
+###############################################################################
 ## Global Input Variables / Arguments
 ##=============================================================================
 argument=""
@@ -272,11 +285,7 @@ bind_device(){
 		if [ $(length "$long_pci_address") -eq $long_address_format_length ]; then
 			echo $success"[PCI device with ID$reset$text [$reset$strong $device_id$reset$text ]$reset$success is$reset$header UNBOUND$reset$success from$reset$text Host machine$reset$success]$reset$accent Ready to bind to$reset$strong VFIO$reset$accent..."$reset
 			echo "UNBIND FD PATH: $sysfs_path/$unbind_fd_path"
-			if [ -z "$sysfs_path/$unbind_fd_path" ]; then
-				echo $long_pci_address > "$sysfs_path/$unbind_fd_path"
-			else
-				echo "$log_prefix$reset$accent No unbound file in device syfs folder, this indicates it is already unbound. Attemping to bind to$reset$text [$reset$header vfio-pci$reset$header ]$reset$accent driver...$reset"
-			fi
+			echo $long_pci_address > "$sysfs_path/$unbind_fd_path"
 		else
 			echo $error_invalid_input
 			break
@@ -311,6 +320,7 @@ test_color_text(){
 	color_text "red" "Red text color"
 	color_text "reset" "Default text color"
 }
+
 ###############################################################################
 ## Argument / User Input
 #==============================================================================
@@ -331,58 +341,62 @@ print_argument_status(){
 	fi
 }
 
-passthrough(){
-	if [ ! -z "$3" ]; then
-		echo "A specific VM to bind this device has been specified: $3"
-		echo $text"WARNING: THIS FEATURE IS NOT YET SUPPORTED."$reset
-	fi
-	if [ -z "$1" ]; then
-		echo $fail"[Error]$reset$text No$strong Device Id$reset$text or$strong PCI Address$reset$text of device to be passed through."$reset
-		echo $text"Usage:$reset$header passthrough 8086:15b8$reset$text or$reset$header vfio-bind 02:00.0"$reset
-		exit 0
-	else
-		argument=$2
-		argument_length=$(length $argument)
-		if [ $argument_length -eq $device_id_format_length ]; then
-			argument_format="device_id"
-			device_id=$argument
-			device_id_length=$argument_length
-			print_argument_status
-		elif [ $argument_length -eq $short_address_format_length ]; then
-			argument_format="short_address"
-			short_pci_address=$argument
-			short_pci_address_length=$argument_length
-			long_pci_address="0000:"$short_pci_address
-			long_pci_address_length=$(length $long_pci_address)
-			print_argument_status
-			if [ $long_pci_address_length -eq $long_address_format_length -a $short_pci_address_length -eq $short_address_format_length ]; then
-				echo "$log_prefix$reset$text Successfully parsed all forms of PCI Address$reset"
-			else
-				print_fatal "invalid_input"
-			fi
-		elif [ $argument_length -eq $long_address_format_length ]; then
-			argument_format="long_address"
-			long_pci_address=$argument
-			long_pci_address_length=$argument_length
-			short_pci_address="$(echo $1 | cut -c 6-)"
-			short_pci_address_length=$(length $short_pci_address)
-			print_argument_status
-			if [ $long_pci_address_length -eq $long_address_format_length -a $short_pci_address_length -eq $short_address_format_length ]; then
-				echo "$log_prefix$reset$text Successfully parsed all forms of PCI Address$reset"
-			else
-				print_fatal "invalid_input"
-			fi
+validate_input(){
+	argument=$1
+	argument_length=$(length $argument)
+	if [ $argument_length -eq $device_id_format_length ]; then
+		argument_format="device_id"
+		device_id=$argument
+		device_id_length=$argument_length
+		print_argument_status
+	elif [ $argument_length -eq $short_address_format_length ]; then
+		argument_format="short_address"
+		short_pci_address=$argument
+		short_pci_address_length=$argument_length
+		long_pci_address="0000:"$short_pci_address
+		long_pci_address_length=$(length $long_pci_address)
+		print_argument_status
+		if [ $long_pci_address_length -eq $long_address_format_length -a $short_pci_address_length -eq $short_address_format_length ]; then
+			echo "$log_prefix$reset$text Successfully parsed all forms of PCI Address$reset"
 		else
 			print_fatal "invalid_input"
 		fi
-		if [ $argument_format = "device_id" ]; then
-			pci_address_lookup
+	elif [ $argument_length -eq $long_address_format_length ]; then
+		argument_format="long_address"
+		long_pci_address=$argument
+		long_pci_address_length=$argument_length
+		short_pci_address="$(echo $1 | cut -c 6-)"
+		short_pci_address_length=$(length $short_pci_address)
+		print_argument_status
+		if [ $long_pci_address_length -eq $long_address_format_length -a $short_pci_address_length -eq $short_address_format_length ]; then
+			echo "$log_prefix$reset$text Successfully parsed all forms of PCI Address$reset"
 		else
-			device_id_lookup
-			device_id_length=$(length $device_id)
-			echo "$log_prefix Successfully looked up device id: $device_id"
-			echo "$log_prefix Device lookup by$reset$accent [$reset$success PCI Address$reset$accent ]$rest$text; maximum devices that can be bound is 1."
-			bind_device $device_id $pci_address
+			print_fatal "invalid_input"
 		fi
+	else
+		print_fatal "invalid_input"
 	fi
 }
+##==============================================================================
+## MAIN_LOOP
+##==============================================================================
+# 1=argument
+main(){
+	print_banner
+	exit_if_not_root
+	validate_input $1
+	if [ $argument_format = "device_id" ]; then
+		pci_address_lookup
+	else
+		device_id_lookup
+		device_id_length=$(length $device_id)
+		echo "$log_prefix Successfully looked up device id: $device_id"
+		echo "$log_prefix Device lookup by$reset$accent [$reset$success PCI Address$reset$accent ]$rest$text; maximum devices that can be bound is 1."
+		bind_device $device_id $pci_address
+	fi
+}
+
+#bind_device $device_id $pci_address
+###############################################################################
+## Main Loop Execution
+main $1

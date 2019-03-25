@@ -2,9 +2,101 @@
 ###############################################################################
 debug=1
 ###############################################################################
-## NOTE: Bourne shell doesn't support $(thing)! Update framework
-## Library Imports
 
+## VITAL TO UNDERSTANDING BOURNE SHELL
+#########################################################################################
+## !!IMPORTANT!!: this function is not ran UNLESS the pci_address variable is 
+## used in this context
+##########################################################################################
+pci_address=$(pci_address_lookup $device_id)
+
+# so one nice way of handling this, is validating the data coming back, such as
+
+# if [ $(length $pci_address) -eq 12 ]; then 
+#    echo "Function successful"
+# fi
+
+
+#################################################3
+# dont need to assign $whoami to current user, shell rpvoides things like this.
+## READ THE FUCKING MANUAL! DONT USE RANDOM ANSWERS ON THE INTERNET
+## THEY ARE ALMOST ALWAYS WRONG!
+
+# $USER = user
+# $PATH
+# $TERM
+
+
+
+###############################################################################
+## TODO: Bourne shell doesn't support $(thing)! Update framework
+## Library Imports
+#
+## TODO: Need to ensure ALL of our framework functions avoid interfering with
+## the namespace of the script it is importing because framework will end up
+## overriding their functions. So maybe just prefix everything with shfw_* 
+## or "eval "someprefix_${bname}() { echo test; }" bash even allows "." in
+## function names with this
+##
+## TODO: Get list of funciton names easily accessible to dev?
+## typeset -f returns the functions with their bodies so a simple awk script
+## is used to pluck out the function names
+## 
+## typeset -f | awk '/\(\) $/ && !/^main / {print $1}'
+## lol why not grep () ? seems like literally hardest way to do this
+##
+## or
+##
+## declare -F 
+##
+## typeset -f lists the fucntions and typeset -F list just the names
+## lol did that guy really write an awk just to get something because
+## he was too lazy to read the help or man page?
+## 
+## turns out typeset is depcreated or being deprecated so declare -F 
+## is the modern way
+## `declare -F` actually prints declare commands and not only fucntion names
+## whereas `compgen -A` function to print only function names
+##
+#
+
+## TO
+
+
+
+is_true(){ # 1=true
+	if [ $1 -eq $true ]; then
+		echo $true
+	else
+		echo
+	fi
+}
+
+is_false(){ # 1=false
+	if [ $1 -eq $false ]; then
+		echo $false
+	else
+		echo $true
+	fi
+}
+
+# This is how you use the functions above
+# to avoid having to do a compaorison liked:
+#    
+#   if [ $(is_true $debug_mode) -eq $true ]: then
+#
+#   if [ -z  $(is_true $debug_mode) ]; then
+
+##################################################3
+## Notice since we cant just return $1 -eq "" we just check and
+# end then return for reduced code size
+is_empty(){ # 1=string_value
+	if [ $1 -eq "" ]; then
+		echo $true
+	else
+		echo $false
+	fi
+}
 
 
 current_working_directory=$(pwd)
@@ -12,7 +104,7 @@ if [ $debug -eq 1 ]; then
 	echo "current_working_directory is:" $current_working_directory
 fi
 
- . ./sh-arguments.sh
+. ./sh-arguments.sh
 
 
 ###############################################################################
@@ -175,15 +267,11 @@ fi
 
 ##[_BOOLEAN_ALIASES_]
 #TRUE
-TRUE=1
 true=1
-YES=1
 yes=1
 ##TODO: Need to also catch the string "Y", "YES", "Yes", and same for no)
 #FALSE
-FALSE=0
 false=0
-NO=0
 no=0
 
 parse_boolean(){# 1=ValueToCheck
@@ -199,7 +287,7 @@ is_true(){# 1=BooleanToCheck
 
 	fi
 }
-	 
+
 
 #==============================================================================
 # MULTIVERSE TERMINAL PALETTE
@@ -216,6 +304,18 @@ fail="\e[91m"       # RED
 reset="\e[0m"       # Terminal Default
 
 ##COLOR_FUNCTION(s)
+in_brackets(){ # 1=text 2=color
+	text=$1
+	color=$2
+	echo "$accent[$reset$color$text$accent]$reset"
+}
+
+log_prefix=$(in_brackets "$command_name")
+debug_prefix=$(in_brackets "DEBUG")
+error_prefix=$(in_brackets "ERROR")
+fatal_error_prefix=$(in_brackets "FATAL ERROR")
+warning_prefix=$(in_brackets "WARNING")
+info_prefix=$(in_brackets " INFO")
 
 ##=============================================================================
 ## ERROR MESSAGES
@@ -266,19 +366,19 @@ CURRENT_USER_GID=$(id -g)
 #------------------------------------------------------------------------------
 ##USER_FUNCTION(s)
 is_root(){
-  if [ $CURRENT_USER = "user" ]; then
-    echo "[Error] Must be logged in as root. Run 'su' and try again."
-    exit 0
-  fi
+	if [ $CURRENT_USER = "user" ]; then
+		echo "[Error] Must be logged in as root. Run 'su' and try again."
+		exit 0
+	fi
 }
 
 
 user_exists(){  # 1=Username
-  echo $(grep $1 /etc/passwd | cut -d ':' -f1)
+	echo $(grep $1 /etc/passwd | cut -d ':' -f1)
 }
 
 group_exists(){  # 1=GroupName
-  echo $(grep $1 /etc/groups | cut -d ':' -f1)
+	echo $(grep $1 /etc/groups | cut -d ':' -f1)
 }
 
 root_user_exists(){
@@ -368,7 +468,12 @@ is_alphanumeric() {
 is_minimum_length_of() {
 	#1=string to check
 	#2=minimum length
-	[ $(length $1) -eq $2 ]
+	if [ $(length $1) -eq $2 ]; then
+		echo $true
+	else
+		echo $false
+	fi
+
 }
 
 

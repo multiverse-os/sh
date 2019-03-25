@@ -1,5 +1,15 @@
 # Multiverse OS: Minimal Bourne Shell Framework
 ===============================================================================
+### Development Notes/Resarch
+The usage of $(variable or function) needs to be removed and replaced with
+analogous bourne code because its not supported by the bourne shell. And we 
+are aiming for maximum compatibility across all linux distributions. 
+
+Unless we find out that by default bash or some form of bash is available on
+all of our supported linux distributions, we need to build bourne compatible
+scripts which have a lot less features.
+
+===============================================================================
 The primary reason to use bourne `sh` framework is used for Multiverse OS shell
 scripting, and recommended to the user, is because it centralized the
 security related responsbilities in shell scripts, implements thorough tests
