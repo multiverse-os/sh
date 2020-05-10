@@ -1,510 +1,572 @@
 #!/bin/sh
 ###############################################################################
-debug=1
+# SH(ell Scripting) FRAMEWORK                                                 #
 ###############################################################################
-
-## VITAL TO UNDERSTANDING BOURNE SHELL
-#########################################################################################
-## !!IMPORTANT!!: this function is not ran UNLESS the pci_address variable is 
-## used in this context
-##########################################################################################
-pci_address=$(pci_address_lookup $device_id)
-
-# so one nice way of handling this, is validating the data coming back, such as
-
-# if [ $(length $pci_address) -eq 12 ]; then 
-#    echo "Function successful"
-# fi
-
-
-#################################################3
-# dont need to assign $whoami to current user, shell rpvoides things like this.
-## READ THE FUCKING MANUAL! DONT USE RANDOM ANSWERS ON THE INTERNET
-## THEY ARE ALMOST ALWAYS WRONG!
-
-# $USER = user
-# $PATH
-# $TERM
-
-
-
+# Framework Global Variables: Basic application, system data, and aliasing    #
+#                                                                             #
 ###############################################################################
-## TODO: Bourne shell doesn't support $(thing)! Update framework
-## Library Imports
-#
-## TODO: Need to ensure ALL of our framework functions avoid interfering with
-## the namespace of the script it is importing because framework will end up
-## overriding their functions. So maybe just prefix everything with shfw_* 
-## or "eval "someprefix_${bname}() { echo test; }" bash even allows "." in
-## function names with this
-##
-## TODO: Get list of funciton names easily accessible to dev?
-## typeset -f returns the functions with their bodies so a simple awk script
-## is used to pluck out the function names
-## 
-## typeset -f | awk '/\(\) $/ && !/^main / {print $1}'
-## lol why not grep () ? seems like literally hardest way to do this
-##
-## or
-##
-## declare -F 
-##
-## typeset -f lists the fucntions and typeset -F list just the names
-## lol did that guy really write an awk just to get something because
-## he was too lazy to read the help or man page?
-## 
-## turns out typeset is depcreated or being deprecated so declare -F 
-## is the modern way
-## `declare -F` actually prints declare commands and not only fucntion names
-## whereas `compgen -A` function to print only function names
-##
-#
+# TASK LIST
+# TODO Add a pure shell YAML parser, then store basic globals, and settings   #
+#      in a YAML file to simplify updating, management and extending the      #
+#      overall framework.                                                     #
+###############################################################################
+    # Application Status                                                      #
+    ###########################################################################
+# Easily way to ignore output 
+ignore_errors="2>/dev/null"
+ignore_output="&>/dev/null"
 
-## TO
+#_SH_DEBUG=1
+current_user=$USER 
 
+# Data Types
+_numeric="0123456789"
+_upcased_alphabetic="ABCDEFGHIJKLMNOPQRSTUVQRSTUVWXYZ"
+_downcased_alphabetic="abcdefghijklmnopqrstuvqrstuvwxyz"
+_alphabetic=$upcased_alphabetic$downcased_alphabetic
+_alphanumeric=$alphabetic$numeric
 
+# Aliases 
+_alpha=$alphabetic
+_digit=$numeric
+    ###########################################################################
+    # Boolean Aliasing                                                        #
+    ###########################################################################
+_true=1
+_false=0
+_true_string="true"
+_false_string="false"
+_true_character="t"
+_false_character="f"
+_yes_string="yes" 
+_no_string="no"
+_yes_character="y"
+_no_character="n"
+    ############################################################################
+    # Color Palette                                                            #
+    ############################################################################
+# ANSI Styles
+_ansi_light="\e[0m"
+_ansi_strong="\e[1m"
+_ansi_underline="\e[4m"
+_ansi_crossed_out="\e[9m"
 
-is_true(){ # 1=true
-	if [ $1 -eq $true ]; then
-		echo $true
+# ANSI Colors
+_ansi_black="\e[30m"
+_ansi_red="\e[31m"
+_ansi_green="\e[32m"
+_ansi_yellow="\e[33m"
+_ansi_blue="\e[34m"
+_ansi_purple="\e[35m" # Magenta
+_ansi_silver="\e[37m" # White
+_ansi_cyan="\e[38m"
+
+# ANSI Bright Colors
+_ansi_white="\e[97m" # Bright White
+_ansi_gray="\e[90m" # Bright Black
+_ansi_bright_purple="\e[95m" # Bright Magenta
+_ansi_bright_green="\e[92m"
+_ansi_bright_yellow="\e[93m"
+_ansi_bright_blue="\e[94m"
+_ansi_bright_cyan="\e[96m"
+_ansi_bright_red="\e[91m"
+
+_ansi_reset="\e[0m"
+# UI Palette 
+# NOTE Allows developers to change these to universely change
+#      all their scripts coloring, making them all consistent. 
+_header="$_ansi_strong$_ansi_purple"
+_subheader=$_ansi_blue
+_text=$_ansi_gray
+_accent="$_ansi_light$_ansi_blue"
+_strong="$_ansi_strong$_ansi_white"
+_success=$_ansi_green
+_warning=$_ansi_yellow
+_fail=$_ansi_red
+_reset=$_ansi_reset
+    ###########################################################################
+    # Error Messages                                                          #
+    ###########################################################################
+has_substring(){ # 1=string 2=substring
+	modified_string=$(echo "$1" | tr -d "$2")
+	if [ $(length $1) -eq $(length $modified_string) ]; then
+		echo 0
 	else
-		echo
+		echo 1
 	fi
 }
 
-is_false(){ # 1=false
-	if [ $1 -eq $false ]; then
-		echo $false
-	else
-		echo $true
-	fi
-}
-
-# This is how you use the functions above
-# to avoid having to do a compaorison liked:
-#    
-#   if [ $(is_true $debug_mode) -eq $true ]: then
-#
-#   if [ -z  $(is_true $debug_mode) ]; then
-
-##################################################3
-## Notice since we cant just return $1 -eq "" we just check and
-# end then return for reduced code size
-is_empty(){ # 1=string_value
-	if [ $1 -eq "" ]; then
-		echo $true
-	else
-		echo $false
-	fi
-}
-
-
-current_working_directory=$(pwd)
-if [ $debug -eq 1 ]; then
-	echo "current_working_directory is:" $current_working_directory
-fi
-
-. ./sh-arguments.sh
-
-
-###############################################################################
-## Multiverse OS Shell Framework
-###############################################################################
-## [Import Example]: Importing Shell Framework (using $SH_FRAMEWORK env)
-#------------------------------------------------------------------------------
-#```
-# #!/bin/bash  
-# import_sh $SH_FRAMEWORK 
-#   ^              ^
-#   |      ________|____________________________________________
-#   |     |                                                     |
-#   |     | env variable, installed in '~/.bashrc' as 'export:  |
-#   |     |   SHELL_FRAMEWORK="~/.local/share/sh/framework.sh   |
-#   |     |_____________________________________________________|
-#   | 
-#  _|_________________________________________
-# |                                           |
-# | 'source' aliased to 'import_sh', and '.': |
-# |    import_sh $SH_FRAMEWORK                |
-# |    . $SH_FRAMEWORK                        |
-# |    source $SH_FRAMEWORK                   | 
-# |                                           |
-# |___________________________________________|
-#
-# [...shell source code...]
-#```
-##=============================================================================
-## Task List
-##-----------------------------------------------------------------------------
-##
-## TODO: Can we enter and leave root as soon as the root permission requiring
-##       tasks are completed to reduce the amount of time root priviledges
-##       are maintained? Because a root account is an attack surface, and
-##       the longer one is using the root account, the longer that attack
-##       surface is a viable target. 
-##
-## TODO: Provide function to provide these messages with X value. Then use those to generate these messages. 
-## then stick all non-standard like beyond maybe 4 and 8 bit, the rest go into a special number/math module. 
-##
-##
-## TODO: Most likely dont want to assign these until they are needed and so
-##       use a function to etiher assign them or just move this logic into
-##       a either OS module or a OS user module. 
-##
-## TODO: OS VALIDATION
-## 	 Root
-## 	 X user (is x user, is NOT x user) [TODO]
-## 	 Is Valid Path (May not exist but valid characters, and format) [TODO]
-## 	 Path Exists [TODO]
-## 	 Is Process Running [TODO]
-##
-## TODO: Add path_valid?; add check if_exists?; check has_permissions?
-##
-## TODO: Is member of X group?
-##
-## Does X directory exist? Does X file exist? (merge these to simplify)
-##
-## Does X directory or file have X permissions or group?
-
-## Create folder of file if does not exist (open_or_create
-
-## iterate through every line of a file and do X, or load every line of file
-## into comma separated string or array (if arrays are possible)
-
-## Load JSON or YAML data
-
-## If root? Login as Root if not. ANd just login as root function
-
-## Coloring text
-
-## Length of string
-
-## Does X string contain substring?
-
-## Substitute all instances of X with Y
-
-## TODO: Transform case
-##       * Downcase
-##       * Upcase
-
-## String equals == X (regular and case insensitve using downcase)
-## Does X sha256 checksum match ANY file on disk?
-
-## Create user
-
-## Kill process
-
-## Start procses, return PID
-
-## Is X *.deb package installed? If not install
-## Is X *.apk package installed? if not install
-
-## Expand home folder into full path
-
-## Split path into base path, filename and existension if exists
-
-## Using magic numbers check file type
-
-## TODO: Random number generation
-
-## NUMBER VALIDATION
-# * Numericality (less (equal) than, greater (equal) than, equal) [TODO]
-# * Is Number (Whole, Decimal, Negative, Positive, Even, Odd) [TODO]
-
-## Multiverse OS VALIDATION
-# * Signature Validation (GPG, Scramble Key, ECDSA, SSH,...) [TODO]
-# * Is X VM Running [TODO]
-# * Is X VM Have Internet Connectivity (Router VMs, Controller VMs,...) [TODO]
-#
-#
-#=============================================================================
-# **Functionality Idea Brainstorming**
+# Input Validation
+# NOTE This design quickly makes it possible to support different locales and
+#      this satisfies critical design requirements of Multiverse OS.  
 # 
-#  * Simplify boolean checks through functions to parse a string or a int to
-#    see if it is a boolean; return either 0 or 1
-#  
-#  * provide a simple function to check length of a string
-#
-#  * provide function to check if a path exists; and one to check if a path
-#    is valid. one of the best ways to check validity is to touch a file 
-#    in that path see it it exists. then just delete it and report if it 
-#    was successful or not. 
-#
-#  * Function to list all available framework modules, then this list can 
-
-#  * Provide functions for creating simple wrapper scripts. For example:
-#    1) a wrapper that will ensure an executable is always running even
-#       after a crash. This is done by surrounding the  `./executable`
-#       with a while true; then ./executable; done loop.
-#    2) Or a wrapper that defines some env variables or uses some env
-#       variables or runs some other stuff before launching a problem
-
-#  * Add some Ruby language human-readable like aliases to function owr
-#    on reproduce functionality in Ruby like until, x times do, and so
-#    on (obviously where its possible) to make vanilla shell scripting
-#    much easier. This could be a module too so its optional and not
-#    bloating the core program
-
-#
-#  * (had an idea for another way to simplify things but cant remember)
-#
-###############################################################################
-## TODO: Go through this document and migrate stuff to modules so that this
-##       is lean and minimial as reasonably possible. And the other logic
-##       is then optional and used when needed. 
-## 
-###############################################################################
-## Gloabl(s)
-##=============================================================================
-# GLOBAL ALISES AND HELPERS
-#------------------------------------------------------------------------------
-
-
-
-
-
-
-
-##[_BOOLEAN_ALIASES_]
-#TRUE
-true=1
-yes=1
-##TODO: Need to also catch the string "Y", "YES", "Yes", and same for no)
-#FALSE
-false=0
-no=0
-
-parse_boolean(){# 1=ValueToCheck
-
-
-
-
-}
-
-is_true(){# 1=BooleanToCheck
-	ParseBoolean
-	if [ ]; then
-
-	fi
-}
-
-
-#==============================================================================
-# MULTIVERSE TERMINAL PALETTE
-#------------------------------------------------------------------------------
-##COLOR_VARIABLE(s)
-header="\e[0;95m"   # PURPLE
-accent="\e[37m"     # WHITE
-subheader="\e[98m"  # GRAY 
-strong="\e[96m"     # CYAN
-text="\e[94m"       # BLUE
-success="\e[92m"    # GREEN
-warning="\e[93m"    # YELLOW
-fail="\e[91m"       # RED
-reset="\e[0m"       # Terminal Default
-
-##COLOR_FUNCTION(s)
-in_brackets(){ # 1=text 2=color
-	text=$1
-	color=$2
-	echo "$accent[$reset$color$text$accent]$reset"
-}
-
-log_prefix=$(in_brackets "$command_name")
-debug_prefix=$(in_brackets "DEBUG")
-error_prefix=$(in_brackets "ERROR")
-fatal_error_prefix=$(in_brackets "FATAL ERROR")
-warning_prefix=$(in_brackets "WARNING")
-info_prefix=$(in_brackets " INFO")
-
-##=============================================================================
-## ERROR MESSAGES
-##-----------------------------------------------------------------------------
-##[Operating System]
-ERROR_MUST_BE_ROOT="Must be logged in as root, or run command with root priviledges. Try again using: \`su\` or \`sudo !!\`." 
-ERROR_INVALID_INPUT="Invalid command-line argument supplied with running command."
-ERROR_FILE_NOT_FOUND="Specified file does not exist."
-ERROR_PATH_NOT_FOUND="Specified path does not exist."
-
-##[String]
-ERROR_NOT_ALPHA="Invalid input, must contain ONLY alphabetical characters."
-ERROR_NOT_NUMERIC="Invalid input, must contain ONLY number characters."
-ERROR_NOT_ALPHANUMERIC="Invalid input, must contain ONLY alphanumeric characters."
-
-##[Number]
-ERROR_NOT_GREATER_THAN_ZERO="Invalid input, must be greater than 0. Must not be negative value."
-ERROR_NOT_GREATER_THAN_2BIT="Invalid input, must be greater than 4."
-ERROR_NOT_GREATER_THAN_4BIT="Invalid input, must be greater than 16."
-ERROR_NOT_GREATER_THAN_6BIT="Invalid input, must be greater than 64."
-ERROR_NOT_GREATER_THAN_8BIT="Invalid input, must be greater than 255."
-ERROR_NOT_LESS_THAN_2BIT="Invalid input, must be less than 4."
-ERROR_NOT_LESS_THAN_4BIT="Invalid input, must be less than 16."
-ERROR_NOT_LESS_THAN_6BIT="Invalid input, must be less than 64."
-ERROR_NOT_LESS_THAN_8BIT="Invalid input, must be less than 255."
-
-
-# OS GLOBAL Variables
-
-
-##IMPORTANT PATH(s)
-##-----------------------------------------------------------------------------
-BASHRC="~/.bashrc"
-SH_FRAMEWORK="~/.local/share/sh/framework.sh"
-#USER(s)
-##-----------------------------------------------------------------------------
-##ROOT
-ROOT_USER="root"
-ROOT_USER_ID=$(id -u root)
-ROOT_USER_GID=$(id -g root)
-##CURRENT USER
-CURRENT_USER=$(whoami)
-CURRENT_USER_ID=$(id -u)
-CURRENT_USER_GID=$(id -g)
-
-
-#OS_FUNCTION(s)
-#------------------------------------------------------------------------------
-##USER_FUNCTION(s)
-is_root(){
-	if [ $CURRENT_USER = "user" ]; then
-		echo "[Error] Must be logged in as root. Run 'su' and try again."
-		exit 0
-	fi
-}
-
-
-user_exists(){  # 1=Username
-	echo $(grep $1 /etc/passwd | cut -d ':' -f1)
-}
-
-group_exists(){  # 1=GroupName
-	echo $(grep $1 /etc/groups | cut -d ':' -f1)
-}
-
-root_user_exists(){
-	user_exists "root"
-}
-
-
-#UTILITIE(s)
-##STRING_UTILITIE(s)
-#------------------------------------------------------------------------------
-length(){
-	echo ${#1}
-}
-
-#split(){ # 1=String 2=SplitAtSymbol
-#	## TODO Should just split and ensure the new separating character is
-#	## space because, there is no array/slice.
-#	echo "echo $1 | cut -d '$2')"
-#}
-
-for_loop(){
-	#1=starting index
-	#2=do x times
-	#3=ending index
-	if [ $1 -lt 0 -o $1 -gt "255" ]; then
-		1=1
-	fi
-	# VALIDATE character is alphanumeric (avoid escapes or other junk)
-	content=""
-	i=0
-	#while [ $i -lt $1 ]; do
-	#done
-}
-
-
-#File IO
-#------------------------------------------------------------------------------
-append_to_file(){ # 1=StringToAppend 2=FilePath
-	echo "$1" >> $2
-}
-
-append_to_bashrc(){ # 1= StringToAppend
-	append_to_file $1 >> $BASHRC
-}
-
-
-###############################################################################
-## Validations and Errors
-##=============================================================================
-# VALIDATIONS
-#------------------------------------------------------------------------------
-##[String]
-#------------------------------------------------------------------------------
-ALPHA="abcdefghijklmnopqrstuvqrstuvwxyz"
-NUMERIC="0123456789"
-ALPHANUMERIC=$($ALPHA+$NUMERIC)
-
-##[Number]
-##------------------------------------------------------------------------------
-ZERO=0
-MIN_UINT=0
-MAX_2BIT=4   #         [ 2^2 ]
-MAX_4BIT=16  #         [ 2^4 ]
-MAX_6BIT=64  # A Nible [ 2^6 ]
-MAX_8BIT=255 # A Byte  [ 2^8 ]
-
-
-###############################################################################
-##   VALIDATION FUNCTIONS
-##=============================================================================
-## GENERAL VALIDATION
-# * Argument Count (Minimum arguments, maximum arguments) [TODO]
-# * Argument Type (Is String, Is Number, Is Path, Is In List) [TODO]
-
-
-
-## STRING VALIDATION
-# * Type (alpha, alphanumeric, numeric) [TODO]
-# * Length (minimum, maximum, between) [TODO]
-# * Not Included In (whitelist, blacklist) [TODO]
-is_alphanumeric() {
-	# VALIDATE number of arguments IS 1 [TODO]
-	return [ $1 =~ [^a-zA-Z0-9] ]
-}
-
-
-is_minimum_length_of() {
-	#1=string to check
-	#2=minimum length
-	if [ $(length $1) -eq $2 ]; then
-		echo $true
+# LANG environmental variables allows us to use OS default
+# Use env based locales: if [ $(has_substring $LANG "en") ]; then
+error_message(){ # 1=error_type 
+	if [ $_invalid_input_error -eq $1 ]; then
+		if [ $(has_substring $LANG "nl") ]; then
+			echo "Not supported"
+		else # en
+			echo "One or more of the command arguments are invalid."
+		fi
+	elif [ $_filepath_not_found_error -eq $1 ]; then
+		if [ $(has_substring $LANG "en") ]; then
+			echo "Specified file does not exist."
+		fi
+	elif [ $_path_not_found_error -eq $1 ]; then
+		if [ $(has_substring $LANG "en") ]; then
+			echo "Specified path does not exist."
+		fi
+	elif [ $_not_root_error -eq $1 ]; then
+		if [ $(has_substring $LANG "en") ]; then
+			echo "Root priviledges required to run this command." 
+		fi
+	elif [ $_not_alphabetic_error -eq $1 ]; then
+		if [ $(has_substring $LANG "en") ]; then
+			echo "Must contain ONLY alphabetical characters."
+		fi
+	elif [ $_not_numeric_error -eq $1 ]; then
+		if [ $(has_substring $LANG "en") ]; then
+			echo "Must contain ONLY number characters."
+		fi
+	elif [ $_not_alphanumeric -eq $1 ]; then
+		if [ $(has_substring $LANG "en") ]; then
+			echo "Must contain ONLY alphanumeric characters."
+		fi
+	elif [ $_not_positive_error -eq $1 ]; then
+		if [ $(has_substring $LANG "en") ]; then
+			echo "Must be greater than 0."
+		fi
 	else
-		echo $false
+		if [ $(has_substring $LANG "en") ]; then
+			echo "Undefined error message"
+		fi
 	fi
-
 }
+###########################################################################
+# Enumerators (Allow avoiding a lot of potential string comparisons)      #
+###########################################################################
+# Log Type
+_debug_log=0
+_info_log=1
+_warn_log=2
+_error_log=3
+_success_log=4
+_fatal_log=5
 
-
-
-##====================================================================
-## TextUI And Text Transformation(s)
-##--------------------------------------------------------------------
-## Very minimal text user interface elements, such as horizontal lines
-## basic prompts (yes/no), path, and menu, anything more complex should
-## rely on higher level languages. 
-#
-
-print_banner(){ # 1=Subtitle
-	echo $header"Multiverse OS$reset$text:$reset$accent $1"$reset
-	echo $accent"======================================================================"$reset
-}
-
-print_x_times(){
-	# VALIDATE character is alphanumeric (avoid escapes or other junk) [TODO]
-	# VALIDATE is NUMBER greater than 0 AND less than 255
-	if [ $1 -lt 0 -o $1 -gt "255" ]; then
-		1=1
+# Input Type
+_alphanumeric=0
+_numeric=1
+_alphabetic=2
+_ascii=3
+_utf8=4
+###############################################################################
+# Framework Functions: Input Validation, Error Handling, Helpers & Utilities  #
+#                                                                             #
+###############################################################################
+# OS Functions                                                            #
+###########################################################################
+is_root(){ # --no-input--
+	if [ $current_user -ne "root" ]; then
+		error $error_must_be_root
+		echo $_false
+	else
+		echo $_true
 	fi
+}
 
-	content=""
-	i=0
-	while [ $i -lt $1 ]; do
-		content="$content$2"
-		i=$((i+1))
-	done
-	echo $content
+user_exists(){   echo $(not_empty $(grep $1 /etc/passwd)); } # 1=user_name
+group_exists(){  echo $(not_empty $(grep $1 /etc/groups)); } # 1=group_name
+in_group(){      echo $(not_empty $(groups | grep $1)); }    # 1=group_name 
+#######################################################################
+## File Functions #####################################################
+#######################################################################
+can_write(){ # 1=path
+	if [ -w $2 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+can_read(){ # 1=path
+	if [ -r $2 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+can_execute(){ # 1=excutable_path
+	if [ -x $1 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+###########################################################################
+# STRING Functions                                                        #
+###########################################################################
+# NOTE  [Using 'tr' command]                                              #
+#       -c removes everything BUT supplied characters, -d deletes, so our #
+#       below tr command is everything but digits, delete.                #
+###########################################################################
+length(){            echo ${#1}; }                              # 1=string
+replace(){           echo $(echo $1 | tr $2 $3);  } # 1=string 2=old 3=new
+remove_whitespace(){ echo $(echo $1 | tr     [:blank:] ''); }   # 1=string
+
+# Filter For Specific Type
+only_numeric(){      echo $(echo $1 | tr -cd [:digit:]); }      # 1=string
+only_alphabetic(){   echo $(echo $1 | tr -cd [:alpha:]); }      # 1=string
+only_alphanumeric(){ echo $(echo $1 | tr -cd [[:alphanum:]]); } # 1=string
+only_ascii(){        echo $(echo $1 | tr -cd [:ascii:]); }      # 1=string
+only_utf8(){         echo $(echo $1 | tr -cd [:utf8:]); }       # 1=string
+
+# Change Letter Case
+upcase(){            echo $(echo $1 | tr [a-z] [A-Z]); }        # 1=string
+downcase(){          echo $(echo $1 | tr [A-Z] [a-z]); }        # 1=string
+###########################################################################
+# VALIDATION FUNCTIONS                                                    #
+###########################################################################
+parse_input(){ # 1=input_type 2=value
+	if [ $_alphanumeric -eq $1 ]; then
+		echo $(only_alphanumeric $2)
+	elif [ $_numeric -eq $1 ]; then
+		echo $(only_numeric $2)
+	elif [ $_alphabetic -eq $1 ]; then 
+		echo $(only_alphabetic $2)
+	elif [ $_utf8 -eq $1 ]; then 
+		echo $(only_utf8 $2)
+	elif [ $_ascii -eq $1 ]; then 
+		echo $(only_ascii $2)
+	else
+		fatal_error "Failed to parse input, unsupported data type."
+	fi
+}
+#######################################################################
+#### BOOLEAN TYPE #####################################################
+#######################################################################
+is_zero(){ # 1=value
+	if [ $1 -eq 0 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+not_zero(){ # 1=value
+	if [ $1 -gt 0 -a $1 -lt 0 ]; then
+		echo $_false
+	else
+		echo $_true
+	fi
+}
+
+# NOTE Checking (downcased input): [1, "true", "t", "yes", "y"]
+is_true(){ # 1=value 
+	1=$(remove_whitespace $1) 
+	if [ $(length $1) -eq 1 -a 1 ]; then
+		echo $_true
+	elif [ $(length $1) -eq 1 -a $(is_zero $1) ]; then
+		echo $_false
+	else
+		1=$(downcase $1)
+		if [ $(length $1) -eq 1 -a $1 -eq $_true_character]; then
+			echo $_true
+		elif [ $(length $1) -eq 1 -a $1 -eq $_yes_character]; then
+			echo $_true
+		elif [ $(length $1) -eq 3 -a $1 -eq $_yes_string ]; then
+			echo $_true
+		elif [ $(length $1) -eq 4 -a $1 -eq $_true_string ]; then
+			# NOTE: Do we need to check "1" is that
+			#       even register as separate from 1 
+			#       checked at the top in `sh`?
+			echo $_true
+		else 
+			echo $_false
+		fi
+	fi
+}
+
+# NOTE Checking (downcased input): [0, "false", "f", "no", "n"]
+is_false(){ # 1=value
+	1=$(remove_whitespace $1) 
+	if [ $(length $1) -eq 1 -a $(is_zero $1) ]; then
+		echo $_false
+	elif [ $(length $1) -eq 1 -a $1 -eq 1 ]; then
+		echo $_true
+	else
+		1=$(downcase $1)
+		if [ $(length $1) -eq 1 -a $1 -eq $_false_character ]; then
+			echo $_flase
+		elif [ $(length $1) -eq 1 -a $1 -eq $_no_character ]; then
+			echo $_flase
+		elif [ $(length $1) -eq 2 -a $1 -eq $_false_string ]; then
+			echo $_flase
+		elif [$(length $1) -eq 4 -a $1 -eq $_no_string ]; then
+			echo $_flase
+		else 
+			echo $_true
+		fi
+	fi
+}
+#######################################################################
+#### STRING TYPE ######################################################
+#######################################################################
+is_blank(){ # 1=input(output from commands like grep) 
+	if [ $(length $1) -eq 0 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
 }
 
 
+not_bank(){ # 1=input(output from commands like grep) 
+	if [ $(length $1) -gt 0 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+is_positive(){ # 1=input(output from commands like grep) 
+	if [ $(length $1) -gt 0 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+is_negative(){ # 1=input(output from commands like grep) 
+	if [ $(length $1) -lt 0 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+is_empty(){ echo $(is_blank $1); }
+not_empty(){ echo $(not_blank $1); }
+
+is_numeric(){ # 1=string
+	if [ $(length $(only_numeric $1)) -eq $(length $1) ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+} 
+
+is_alphabetic(){ # 1=string
+	if [ $(length $(only_alphabetic $1)) -eq $(length $1) ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+} 
+
+is_alphanumeric(){ # 1=string
+	if [ $(length $(only_alphanumeric $1)) -eq $(length $1) ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+} 
+
+is_ascii(){ # 1=string
+	if [ $(length $(only_ascii $1)) -eq $(length $1) ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+is_utf8(){ # 1=string
+	if [ $(length $(only_utf8 $1)) -eq $(length $1) ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+#######################################################################
+#### STRING Type ######################################################
+#######################################################################
+length_above_minimum(){ # 1=string 2=minimum_length
+	if [ $(length $1) -lt $2 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+length_below_maximum(){ # 1=string 2=maximum_length
+	if [ $(length $1) -gt $2 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+length_between(){ # 1=string 2=minimum_length 3=maximum_length
+	string_length=$(length $1)
+	if [ $string_length -gt $2 -a $string_length -lt $3 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+#######################################################################
+#### NUMBER Type ######################################################
+#######################################################################
+is_above_minimum(){ # 1=value 2=minimum_value
+	if [ $1 -gt $2 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+is_below_maximum(){ # 1=value 2=maximum_value
+	if [ $1 -lt $2 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+is_between(){ # 1=value 2=minimum_value 3=maximum_value
+	if [ $1 -lt $2 -o $1 -gt $3 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+	#######################################################################
+	#### PATH Type ########################################################
+	#######################################################################
+	path_exists(){ #1=path
+		if [ -f $1 -o -d $1 ]; then
+			echo $_true
+		else
+			echo $_false
+		fi
+	}
+
+file_exists(){ #1=file_path
+	if [ -f $1 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+
+directory_exists(){  #1=directory_path
+	if [ -d $1 ]; then
+		echo $_true
+	else
+		echo $_false
+	fi
+}
+###########################################################################
+# TextUI (Print Helpers)                                                  #
+###########################################################################
+# Very minimal text user interface elements, such as horizontal lines     #
+# basic prompts (yes/no), path, and menu, anything more complex should    #
+# rely on higher level languages.                                         #
+###########################################################################
+#### Simplify ANSI Coloring ###########################################
+#######################################################################
+black(){  echo "$_ansi_black$1$_ansi_reset"; }   # 1=Text
+red(){    echo "$_ansi_red$1$_ansi_reset"; }     # 1=Text
+green(){  echo "$_ansi_green$1$_ansi_reset"; }   # 1=Text
+yellow(){ echo "$_ansi_yellow$1$_ansi_reset"; }  # 1=Text
+purple(){ echo "$_ansi_purple$1$_ansi_reset"; }  # 1=Text
+silver(){  echo "$_ansi_silver$1$_ansi_reset"; } # 1=Text
+cyan(){   echo "$_ansi_cyan$1$_ansi_reset"; }    # 1=Text
+blue(){   echo "$_ansi_blue$1$_ansi_reset"; }    # 1=Text
+
+gray(){   echo "$_ansi_gray$1$_ansi_reset"; }   
+white(){  echo "$_ansi_white$1$_ansi_reset"; }  
+bright_red(){    echo "$_ansi_bright_red$1$_ansi_reset"; }   
+bright_purple(){ echo "$_ansi_bright_purple$1$_ansi_reset"; } 
+bright_green(){  echo "$_ansi_bright_green$1$_ansi_reset"; }     
+bright_yellow(){ echo "$_ansi_bright_yellow$1$_ansi_reset"; }     
+bright_blue(){   echo "$_ansi_bright_blue$1$_ansi_reset"; }     
+bright_cyan(){   echo "$_ansi_bright_cyan$1$_ansi_reset"; }     
+
+light(){       echo "$_ansi_light$1$_ansi_reset"; }          
+strong(){      echo "$_ansi_strong$1$_ansi_reset"; }         
+underline(){   echo "$_ansi_underline$1$_ansi_reset"; }      
+crossed_out(){ echo "$_ansi_crossed_out$1$_ansi_reset"; }  
+
+header(){    echo "$_header$1$_reset"; }
+subheader(){ echo "$_subheader$1$_reset"; }
+strong(){    echo "$_strong$1$_reset"; }            
+accent(){    echo "$_accent$1$_reset"; }   
+text(){      echo "$_text$1$_reset"; }
+success(){   echo "$_success$1$_reset"; }
+warning(){   echo "$_warning$1$_reset"; }
+fail(){      echo "$_fail$1$_reset"; }
+#######################################################################
+#### Simplify Log Messages ############################################
+#######################################################################
+# 1=text 2=color(optional)
+brackets(){ echo "$(strong '[')$2$1$(strong ']')"; } 
+#parens(){  echo "$(accent '(')$2$1$(accent ')')"; } # 1=text 2=color
+#braces(){  echo "$(accent '{')$2$1$(accent '}')"; } # 1=text 2=color
+#arrows(){  echo "$(accent '<')$2$1$(accent '>')"; } # 1=text 2=color
+
+log_type_to_string(){ # 1=log_type
+	if [ $(length $(only_numeric $1)) -gt 0 ]; then
+		if [ $_info_log -eq $1 ]; then 
+			echo $(subheader "Info")
+		elif [ $_warn_log -eq $1 ]; then 
+			echo $(warning "Warn")
+		elif [ $_success_log -eq $1 ]; then 
+			echo $(success "Success")
+		elif [ $_error_log -eq $1 ]; then 
+			echo $(fail "Error")
+		elif [ $_fatal_log -eq $1 ]; then 
+			echo $(fail "Fatal")
+		else # $_debug_log
+			echo $(header "Debug")
+		fi
+	else 
+		echo $(header $1)
+	fi
+}
+
+log(){  # 1=log_type 2=message 
+	if [ $(length $1) -eq 0 ]; then
+		1=$_debug_log
+	fi
+	_print_log "$1" "$2"
+}  
+
+debug_log(){   _print_log "$_debug_log" "$1"; } # 1=message
+info_log(){    _print_log "$_info_log" "$1"; }  # 1=message
+warn_log(){    _print_log "$_warn_log" "$1"; }  # 1=message 
+success_log(){ _print_log "$_success_log" "$1"; }  # 1=message 
+error_log(){   _print_log "$_error_log" "$1"; } # 1=message 
+
+fatal_error(){ # 1=message
+	_print_log "$_fatal_log" "$1"
+	exit 1 
+} 
+
+_print_log(){ # 1=log_type 2=message
+	echo "$(brackets "$(log_type_to_string "$1")") $(strong "$2")"
+}
+#######################################################################
+#### Simplify Banners #################################################
+#######################################################################
+horizontal_line(){ # --no-input
+	# 80 length
+	echo $(strong "===============================================================================")
+}
+
+banner(){ # 1=header 2=subheader
+	title="$(header "$1")$(white ":") $(light "$(subheader "$2")")"
+	echo $title
+	horizontal_line
+}

@@ -23,9 +23,9 @@ sysfs_path=""
 ###############################################################################
 ## Shell Helpers
 ##=============================================================================
-command_name="vfio-bind"
+command_name="vfio-bind" # TODO: Use $0 built in 
 current_user=$(whoami)
-mv_user="user"
+mv_user="user" # Use $USER builtin
 mv_group="kvm" #eventually should be 'multiverse' since its more similar to 'libvirt' than 'kvm'
 ignore_errors="2>/dev/null"
 ignore_output="&>/dev/null"

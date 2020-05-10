@@ -3,7 +3,7 @@
 # LIBRARY IMPORT ##############################################################
 ##  Should add a check if its installed automated preferably
 #
-# sh_import $SH_FRAMEWORK "all" #"vm libvirt"
+# import $SH_FRAMEWORK "all" #"vm libvirt"
 #
 ###############################################################################
 ## Style NOTE: All variables are reassigned to a name that is human readable
