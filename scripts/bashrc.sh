@@ -1,7 +1,9 @@
 #!/bin/sh
 ###############################################################################
 ## Multiverse OS: Install
-##=[_DEV_TASK_LIST_]===========================================================
+## ._______________.
+##=| DEV TASK LIST |===========================================================
+## '---------------'
 # TODO: Move ALL the *install* code into a SINGLE install script with flags
 #  or even sub-command to use the code now segregated into different
 #  install scriptfs
@@ -86,24 +88,19 @@ bashrc="$home/.bashrc"
 #       reduced.
 
 is_verbose_mode(){
-	if [ -z $verbose ]; then
-		return 0
-	else
+	if [ $verbose -eq 1 ]; then
 		return 1
+	else
+		return 0
 	fi
 }
 
 is_debug_mode(){
-	if [ -z $debug ]; then
-		return 0
-	else
+	if [ $debug -eq 1 ]; then
 		return 1
+	else
+		return 0
 	fi
-}
-
-##[_PRINT_TEXT_]
-print_append_info(){
-	echo "Attempting to apend string: \"$1\" to file \"$2\" \n\n"
 }
 
 ##[_FILE_I/O_FUNCTION(s)_]
@@ -111,29 +108,12 @@ length(){
 	echo ${#1}
 }
 
-# TODO should always return result of the if statement not check then
-#      ouput separate value. Only like this for speed.
-exists(){
-	if [ -z $bashrc ]; then
-		return 0
-		else
-		return 1
-	fi
-}
-
 # TODO: Not ideal because they are doing string comparsion
 append_to_file(){
-	if [ "$(is_debug_mode)" = "1" ]; then
-		print_append_info $1 $2
-	fi
-	#echo "[DEV OUTPUT] Can't do \$echo \"\$1\" >> \"\$2\""
 	echo "$(echo \"\$1\" >> \"\$2\")"
 } 
 
 append_to_bashrc(){
-	if [ "$(is_debug_mode)" = "1" ]; then
-		print_append_info $1 $bashrc
-	fi
 	append_to_file "$1" >>"$bashrc"
 }
 
@@ -283,7 +263,7 @@ main(){
 	#if [ $(is_verbose) -eq 1]; then
 	#	append_verbose_helptext
 	#fi
-	append_import_sh_patch
+	#append_import_sh_patch
 }
 
 

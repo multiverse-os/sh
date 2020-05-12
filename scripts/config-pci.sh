@@ -1,9 +1,6 @@
 #!/bin/sh
 
-# ======================================
-#
-# Multiverse OS Script Color Palette
-# --------------------------------------
+# TODO: Convert to using the framework
 header="\e[0;95m"
 accent="\e[37m"
 subheader="\e[98m"
@@ -18,9 +15,9 @@ reset="\e[0m"
 # Below are variables relating to Multiverse
 
 MV_USER="user"
-MV_GROUP="libvirt"
-MV_CONFIG_PATH="/var/www/multiverse/"
-MV_PATH="/home/user/multiverse-os/"
+MV_GROUP="kvm" # Later it will be multiverse
+MV_DATA_PATH="/var/multiverse/"
+MV_CONFIG_PATH="/etc/multiverse/"
 
 ## ======================================
 ##

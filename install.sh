@@ -159,3 +159,19 @@ main(){ # --no-input--
 #### Executing main function ##################################################
 main
 success_log "Installation Completed!"
+
+
+# Old style may be useful in the near future
+#echo -e ""                                                                                 >> ~/.bashrc
+#echo -e "## Multiverse OS: Bourne Shell Framework Import Syntax Patch"                     >> ~/.bashrc
+#echo -e "################################################################################" >> ~/.bashrc
+#echo -e "## SH_FRAMEWORK environmental variable is set to simplify import"                 >> ~/.bashrc
+#echo -e "## delclarations "                                                                >> ~/.bashrc
+#echo -e "#"                                                                                >> ~/.bashrc
+#echo -e ""                                                                                 >> ~/.bashrc
+#echo -e ""                                                                                 >> ~/.bashrc
+#echo -e "export SH_FRAMEWORK=\"\$SH_FRAMEWORK\""                                           >> ~/.bashrc
+#echo -e "import_script_with_data\(\){"                                                     >> ~/.bashrc
+#echo -e "SH_IMPORT_PARAMETER=\$2 . ./\$1"                                                  >> ~/.bashrc
+#echo -e "}"                                                                                >> ~/.bashrc
+#echo -e "alias sh_import=\"import_script_with_data\""                                      >> ~/.bashrc
