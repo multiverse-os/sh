@@ -167,8 +167,8 @@ _utf8=4
 # OS Functions                                                            #
 ###########################################################################
 
-run(){
-}
+#run(){
+#}
 
 is_root(){ # --no-input--
 	if [ $current_user -ne "root" ]; then

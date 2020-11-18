@@ -1,0 +1,8 @@
+virsh start network0.bridge0.router
+virsh start network0.bridg11.router
+virsh start network1.bridge0.router
+virsh start network1.bridge1.router
+virsh start network2.bridge0.router
+virsh start network2.bridge1.router
+virsh start network3.bridge0.router
+virsh start network3.bridge1.router

@@ -97,6 +97,8 @@ main(){ # --no-input--
 	#######################################################################
 	# Confirm Install Dependencies Exist                                  #
 	#######################################################################
+	mkdir -p $_sh_data
+
 	log $_sh_filename "Checking for dependencies: $_sh_dependencies"
 	if [ $(length $(git | grep "git help")) -gt 0 ]; then
 		log $_sh_filename " Dependencies are already installed..."
